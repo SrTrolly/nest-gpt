@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { orthographyCheckUseCase, prosConsDicusserUserCase, prosConsDicusserStreamUserCase, translateUseCase, textToAudioUseCase, audioToTextUseCase } from './use-cases';
+import { orthographyCheckUseCase, prosConsDicusserUserCase, prosConsDicusserStreamUserCase, translateUseCase, textToAudioUseCase, audioToTextUseCase, imageGenerationUseCase, generateVariationUseCase } from './use-cases';
 import OpenAI from 'openai';
-import { AudioToTextDto, OrthographyDto, ProsConsDiscusserDto, TextToAudioDto, TranslateDto } from './dtos';
+import { AudioToTextDto, ImageGenerationDto, ImageVariationDto, OrthographyDto, ProsConsDiscusserDto, TextToAudioDto, TranslateDto } from './dtos';
 import * as fs from "fs";
 import * as path from "path";
 
@@ -40,7 +40,7 @@ export class GptService {
         const filePath = path.resolve(__dirname, "../../generated/audios/", `${id}.mp3`);
         const wasFound = fs.existsSync(filePath);
 
-        if (!wasFound) new NotFoundException(`File ${id} not found`);
+        if (!wasFound) throw new NotFoundException(`File ${id} not found`);
 
         return filePath;
     }
@@ -48,6 +48,22 @@ export class GptService {
     async audioToText(audioFile: Express.Multer.File, audioToTextDto: AudioToTextDto) {
         const { prompt } = audioToTextDto;
         return await audioToTextUseCase(this.openAi, { audioFile, prompt });
+    }
+
+    async imageGenerationDto(imageGenerationDto: ImageGenerationDto) {
+        return await imageGenerationUseCase(this.openAi, { ...imageGenerationDto });
+    }
+
+    imageGeneratedGetter(name: string) {
+        const filePath = path.resolve("./", "./generated/images/", `${name}`);
+        const wasFound = fs.existsSync(filePath);
+
+        if (!wasFound) throw new NotFoundException(`Image ${name} was not found`);
+        return filePath;
+    }
+
+    async generateImageVariation({ baseImage }: ImageVariationDto) {
+        return generateVariationUseCase(this.openAi, { baseImage });
     }
 
 }
